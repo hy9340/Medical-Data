@@ -184,7 +184,7 @@ const MedicalDataProcessor = () => {
       
       // カルテNOでグループ化し、グループサイズが1のみを残す（重複していないもの）
       const karute_counts = _.countBy(df_6, 'KARUTE_NO');
-      const df_no_ikan = df_6.filter(item => karute_counts[item.KARUTE_NO] === 1);
+      const df_no_ikan = df_6.filter(item => item && item.KARUTE_NO && karute_counts[item.KARUTE_NO] === 1);
       
       console.log('医管未算定患者特定完了:', df_no_ikan.length, '件');
 
@@ -199,15 +199,19 @@ const MedicalDataProcessor = () => {
       };
       
       // KARUTE_NOをすべて数値として扱う
-      const df_kanjya_with_numeric = df_kanjya.map(row => ({
-        ...row,
-        KARUTE_NO_NUM: ensureNumber(row.KARUTE_NO)
-      }));
+      const df_kanjya_with_numeric = df_kanjya
+        .filter(row => row !== null && row !== undefined)
+        .map(row => ({
+          ...row,
+          KARUTE_NO_NUM: ensureNumber(row.KARUTE_NO)
+        }));
       
-      const df_no_ikan_with_numeric = df_no_ikan.map(row => ({
-        ...row,
-        KARUTE_NO_NUM: ensureNumber(row.KARUTE_NO)
-      }));
+      const df_no_ikan_with_numeric = df_no_ikan
+        .filter(row => row !== null && row !== undefined)
+        .map(row => ({
+          ...row,
+          KARUTE_NO_NUM: ensureNumber(row.KARUTE_NO)
+        }));
       
       // Pythonのmergeと同様の処理（内部結合）
       const df_comp = df_kanjya_with_numeric
@@ -229,7 +233,10 @@ const MedicalDataProcessor = () => {
       setProcessing(false);
     } catch (error) {
       console.error('データ処理エラー:', error);
-      setStatus(`エラーが発生しました: ${error.message}`);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '不明なエラーが発生しました';
+      setStatus(`エラーが発生しました: ${errorMessage}`);
       setProcessing(false);
     }
   };
@@ -301,7 +308,10 @@ const MedicalDataProcessor = () => {
       setStatus('ファイルがダウンロードされました。\n\nExcelで開く際の注意: データタブから「テキストファイルから」を選択し、文字コードをUTF-8に指定してください。');
     } catch (error) {
       console.error('ダウンロードエラー:', error);
-      setStatus(`ダウンロード中にエラーが発生しました: ${error.message}`);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '不明なエラーが発生しました';
+      setStatus(`ダウンロード中にエラーが発生しました: ${errorMessage}`);
     }
   };
 
